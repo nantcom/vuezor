@@ -1,0 +1,65 @@
+﻿@page "/"
+
+<DataContext TData="SampleVM">
+
+    <div>
+        <h1>
+            Counter Demo
+        </h1>
+        Hello from Vue @context.Mustache(nameof(context.counter))
+
+        <input v-model="counter" />
+        <button v-on:click="Increment">Increment</button>
+    </div>
+
+    <h1>
+        Binding to Getters
+    </h1>
+    <div>
+        <p>
+            First:
+            <input v-model="firstName" /><br />
+            Binding : {{ firstName }}
+        </p>
+        <p>
+            Last:
+            <input v-model="lastName" /><br />
+            Binding : {{ lastName }}
+        </p>
+        <p>
+            Binding to <b>Name</b> will only update if there is non pure roundtrip to server:<br />
+            <b>
+                {{ Name }}
+            </b>
+        </p>
+        <p>
+            Binding to <b>Name</b> using Model
+
+            <input v-model="Name" /><br />
+        </p>
+    </div>
+
+    <div>
+        <h1>
+            ToDo Demo
+        </h1>
+
+        <ul>
+            <li v-for="item in @(nameof(context.TodoItems))">
+                <input type="checkbox" v-model="item.Completed" /> {{ item.ToDo }}
+            </li>
+        </ul>
+        <ul>
+            <li v-for="item in @(nameof(context.TodoItems))">
+                {{item.Completed}} : {{item.ToDo}}
+            </li>
+        </ul>
+        <div>
+            <p>
+                New: <input v-model="NewItem.ToDo" />
+            </p>
+        </div>
+
+        <button v-on:click="AddItem">Add Item</button>
+    </div>
+</DataContext>
