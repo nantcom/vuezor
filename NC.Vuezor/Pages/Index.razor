@@ -1,65 +1,105 @@
 ﻿@page "/"
+<VueApp TData="SampleVM"
+        VueComponents="@(new string[] { "mdb" })"
+        IsLoggingEnabled="false">
 
-<DataContext TData="SampleVM">
-
-    <div>
-        <h1>
-            Counter Demo
-        </h1>
-        Hello from Vue @context.Mustache(nameof(context.counter))
-
-        <input v-model="counter" />
-        <button v-on:click="Increment">Increment</button>
-    </div>
-
-    <h1>
-        Binding to Getters
+    <h1 style="margin-bottom: 20px">
+        Vuezor Demo
     </h1>
-    <div>
-        <p>
-            First:
-            <input v-model="firstName" /><br />
-            Binding : {{ firstName }}
-        </p>
-        <p>
-            Last:
-            <input v-model="lastName" /><br />
-            Binding : {{ lastName }}
-        </p>
-        <p>
-            Binding to <b>Name</b> will only update if there is non pure roundtrip to server:<br />
-            <b>
-                {{ Name }}
-            </b>
-        </p>
-        <p>
-            Binding to <b>Name</b> using Model
 
-            <input v-model="Name" /><br />
-        </p>
-    </div>
+    <mdbcard style="margin-bottom: 20px">
+        <mdbcardbody>
+            <mdbcardtitle class="text-primary">
+                <h2>Counter Demo</h2>
+            </mdbcardtitle>
+            <mdbcardtext>
 
-    <div>
-        <h1>
-            ToDo Demo
-        </h1>
+                Hello from Vue @context.Mustache(nameof(context.counter))
 
-        <ul>
-            <li v-for="item in @(nameof(context.TodoItems))">
-                <input type="checkbox" v-model="item.Completed" /> {{ item.ToDo }}
-            </li>
-        </ul>
-        <ul>
-            <li v-for="item in @(nameof(context.TodoItems))">
-                {{item.Completed}} : {{item.ToDo}}
-            </li>
-        </ul>
-        <div>
-            <p>
-                New: <input v-model="NewItem.ToDo" />
-            </p>
-        </div>
+                <div style="margin-top: 20px">
+                    <mdbinput label="Two Way binding:" v-model="counter" />
+                </div>
+            </mdbcardtext>
 
-        <button v-on:click="AddItem">Add Item</button>
-    </div>
-</DataContext>
+            <mdbbtn color="primary" v-on:click="Increment">Increment on Server</mdbbtn>
+        </mdbcardbody>
+    </mdbcard>
+
+    <mdbcard style="margin-bottom: 20px">
+        <mdbcardbody>
+            <mdbcardtitle class="text-primary">
+                <h2>Binding to Computed (Getters/Setters)</h2>
+            </mdbcardtitle>
+            <mdbcardtext>
+                <p>
+                    <mdbinput label="First:" v-model="firstName" />
+                    <span class="text-muted">
+                        Binding Value: {{ firstName }}
+                    </span>
+                </p>
+                <p>
+                    <mdbinput label="Last:" v-model="lastName" />
+                    <span class="text-muted">
+                        Binding Value: {{ lastName }}
+                    </span>
+                </p>
+                <p>
+                    Binding to Computed
+                    <b>Name</b>.
+                    <h3 class="text-secondary">
+                        {{ Name }}
+                    </h3>
+
+                    <div class="alert alert-warning" role="alert">
+                        Since it was computed by server, the value will only update if there is non pure roundtrip to server
+                        <div>
+                            <mdbbtn color="primary" v-on:click="Increment">Send Increment</mdbbtn>
+                        </div>
+                    </div>
+                </p>
+                <p style="margin-top: 30px;">
+                    <mdbinput label="Two-way binding to Name (Setter)" v-model="Name" />
+
+                    <div class="alert alert-success" role="alert">
+                        Unlike Getter, Setter is executed on server and Vue's $data will be updated immediately
+                    </div>
+                </p>
+
+
+
+            </mdbcardtext>
+
+        </mdbcardbody>
+    </mdbcard>
+
+
+    <mdbcard style="margin-bottom: 100px">
+        <mdbcardbody>
+            <mdbcardtitle class="text-primary">
+                <h2>ToDo Demo</h2>
+            </mdbcardtitle>
+            <mdbcardtext>
+
+
+                <mdbcheckbox v-model="item.Completed" :label="item.ToDo"
+                             v-for="item in @(nameof(context.TodoItems))" />
+
+                <div style="margin-top: 25px">
+                    Model Values:
+                    <ul>
+                        <li v-for="item in @(nameof(context.TodoItems))">
+                            {{item.Completed}} : {{item.ToDo}}
+                        </li>
+                    </ul>
+                </div>
+                <form style="margin-top: 20px"
+                       v-on:submit="AddItem" >
+                    <mdbinput input-group label="Todo Text" v-model="NewItem.ToDo" required>
+                        <mdbbtn color="secondary"type="submit">Add Item</mdbbtn>
+                    </mdbinput>
+                </form>
+            </mdbcardtext>
+        </mdbcardbody>
+    </mdbcard>
+
+</VueApp>

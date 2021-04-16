@@ -1,0 +1,7 @@
+﻿@typeparam TData
+@namespace NC.Blazor
+
+<div @ref="VueContextId"
+     data-vue-components="@(string.Join( ",", this.VueComponents))">
+    @ChildContent(_DataInstance)
+</div>

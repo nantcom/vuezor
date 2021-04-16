@@ -4,21 +4,19 @@ export function VuezorDataContext(rootElementRef, useLocal, model, dotNet, log) 
 
     function wait(lib, name, callback) {
 
-        if (lib != null) {
-
-            var key = "lib-" + name;
-            if (document.getElementsByClassName(key).length == 0) {
-
-                var newScript = document.createElement("script");
-                newScript.src = lib;
-                newScript.className = key;
-                document.getElementsByTagName("head")[0].appendChild(newScript);
-            }
-        }
-
         if (window[name]) {
             callback(window[name]);
             return;
+        }
+
+        if (lib != null) {
+
+            if (document.querySelectorAll("script[src='" + lib + "']").length == 0) {
+
+                var newScript = document.createElement("script");
+                newScript.src = lib;
+                document.getElementsByTagName("head")[0].appendChild(newScript);
+            }
         }
 
         window.setTimeout(function () {
@@ -35,7 +33,7 @@ export function VuezorDataContext(rootElementRef, useLocal, model, dotNet, log) 
         }
 
         if (delay == null) {
-            delay = 250;
+            delay = 125;
         }
 
         var myCount = ++dgroups[group];
@@ -56,14 +54,16 @@ export function VuezorDataContext(rootElementRef, useLocal, model, dotNet, log) 
 
         model = JSON.parse(model);
 
-        $me.log = function (obj) {
+        if (log) {
 
-            if (log) {
+            $me.log = console.log;
+        } else {
 
-                console.log(obj);
-            }
+            $me.log = function () { };
         }
 
+        $me.pureOverride = false;
+        $me.latestState = {};
         $me.justApply = false;
         $me.apply = function (vm, result) {
 
@@ -73,40 +73,36 @@ export function VuezorDataContext(rootElementRef, useLocal, model, dotNet, log) 
             $me.log("apply:");
             $me.log(result);
 
-            for (var prop in vm.$data) {
+            for (var prop in result) {
 
-                var oldJ = JSON.stringify(vm.$data[prop]);
-                var newJ = "";
-                var key = prop;
-
-                if (prop.indexOf("computed__") >= 0) {
-
-                    key = prop.substr(10);
-                }
-
-                if (typeof result[key] !== 'undefined') {
-
-                    newJ = JSON.stringify(result[key]);
-                }
-
-                if (oldJ !== newJ) {
-
-                    vm.$data[prop] = result[prop];
-                }
+                vm.$data[prop] = result[prop];
             }
 
+            $me.latestState = $me.serializeState(true);
+
             $me.log("apply result:");
-            $me.log(result);
+            $me.log($me.latestState);
 
             $me.justApply = true;
         };
 
-        $me.serializeState = function () {
+        $me.serializeState = function (full) {
 
             var state = {};
             for (var prop in $me.vm.$data) {
 
-                state[prop] = $me.vm.$data[prop];
+                var json = JSON.stringify($me.vm.$data[prop]);
+                if (full) {
+                    state[prop] = JSON.parse(json);
+                    continue;
+                }
+
+                var lastState = JSON.stringify($me.latestState[prop]);
+
+                if (json !== lastState) {
+
+                    state[prop] = JSON.parse(json);
+                }
             }
 
             return state;
@@ -128,6 +124,10 @@ export function VuezorDataContext(rootElementRef, useLocal, model, dotNet, log) 
                 var state = $me.serializeState();
                 $me.log(state);
 
+                if ($me.pureOverride) {
+                    pure = false;
+                }
+
                 if (pure) {
 
                     dotNet.invokeMethodAsync("InvokeMethodPure", methodName, JSON.stringify(state));
@@ -138,7 +138,7 @@ export function VuezorDataContext(rootElementRef, useLocal, model, dotNet, log) 
                         .then(r => $me.apply($me.vm, JSON.parse(r)));
                 }
 
-            }, 125 );
+            });
         };
 
         $me.setter = function (propName, newValue, oldValue, pure) {
@@ -150,8 +150,10 @@ export function VuezorDataContext(rootElementRef, useLocal, model, dotNet, log) 
                 return;
             }
 
-
             $me.log("dotNet setter:" + propName);
+            if ($me.pureOverride) {
+                pure = false;
+            }
 
             if (pure) {
 
@@ -221,7 +223,12 @@ export function VuezorDataContext(rootElementRef, useLocal, model, dotNet, log) 
         vueInit.methods = {};
         model.methods.forEach(function (method) {
 
-            vueInit.methods[method.name] = function () {
+            vueInit.methods[method.name] = function (e) {
+
+                if (e != null && method.preventDefault == true) {
+
+                    e.preventDefault();
+                }
 
                 $me.methodInvoker(method.name);
             };
@@ -238,7 +245,7 @@ export function VuezorDataContext(rootElementRef, useLocal, model, dotNet, log) 
 
             if (computed.getter == null || computed.getter == "") {
 
-                $me.log("Warning: GetterJS was not defined for " + computed.name + ". Value will not update unless there is roundtrip (method calls/setter) to server.");
+                console.log("Vuezor Warning: GetterJS was not defined for " + computed.name + ". Value will not update unless there is roundtrip (method calls/setter) to server. Pure Calls are also disabled.");
 
                 // for getters, we could not actually create getter
                 // because vue could not observe it
@@ -247,6 +254,8 @@ export function VuezorDataContext(rootElementRef, useLocal, model, dotNet, log) 
 
                     return this["computed__" + computed.name];
                 };
+
+                $me.pureOverride = true;
             }
             else {
 
@@ -270,28 +279,79 @@ export function VuezorDataContext(rootElementRef, useLocal, model, dotNet, log) 
         for (var prop in vueInit.watch) {
 
             var name = prop;
-            vueInit.watch[prop].handler = function (newValue, oldValue) {
+            var oldValue = null;
+            vueInit.watch[prop].handler = function (newValue) {
 
-                $me.setter(name, newValue, "", vueInit.watch[name].pure);
+                if (oldValue == null) {
+
+                    $me.setter(name, newValue, "", vueInit.watch[name].pure);
+                }
+                else {
+
+                    $me.setter(name, newValue, oldValue, vueInit.watch[name].pure);
+                }
+                oldValue = JSON.parse( JSON.stringify(newValue) );
             };
         }
 
         $me.log("Vue Initializing, init");
+        $me.log(model);
         $me.log(vueInit);
 
         $me.app = vueLib.createApp(vueInit);
+
+        var components = rootElementRef.getAttribute("data-vue-components").split(",");
+        components.forEach(function (component) {
+
+            var instance = Window[component];
+
+            if (typeof instance === "undefined") {
+
+                try {
+                    instance = eval(component);
+                } catch (e) {
+                    instance = null;
+                }
+            }
+
+            if (typeof instance === "object") {
+
+                if (component.indexOf(".") == -1) {
+
+                    for (var key in instance) {
+
+                        var name = instance[key].name;
+                        if (name == null) {
+                            name = key;
+                        }
+
+                        $me.app.component(name.toLowerCase(), instance[key]);
+                    }
+                }
+                else {
+
+                    var name = instance.name;
+                    if (name == null) {
+                        name = component.substring( component.indexOf(".") + 1 );
+                    }
+
+                    $me.app.component(instance.name.toLowerCase(), instance);
+                }
+            }
+        });
+
         $me.vm = $me.app.mount(rootElementRef);
 
         $me.log("Vue Initialized");
     };
 
     if (useLocal) {
-        wait("./vue/vue.global.prod.js", "Vue", initialize)
 
+        wait("./_content/NC-Blazor.Vuezor/vue/vue.global.prod.js", "Vue", initialize)
     }
     else {
-        wait("https://cdnjs.cloudflare.com/ajax/libs/vue/3.0.11/vue.global.prod.js", "Vue", initialize)
 
+        wait("https://cdnjs.cloudflare.com/ajax/libs/vue/3.0.11/vue.global.prod.js", "Vue", initialize)
     }
 
     return $me;
