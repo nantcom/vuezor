@@ -1,5 +1,14 @@
 # NC-Blazor : VueZor
-Use Vue with Blazor. Actually, it is Blazor but rendered on client-side with Vue!
+Comebine power of Blazor with VueJs. Write your code in C# and Blazor, render on client-side with Vue! Use Vue with Blazor by just installing one NuGet Package!  
+Live Demo: https://vuezor.nant.co/
+
+🟩 **No JavaScript**  
+🟩 Actuall, also does not need to know Vue 🤣  
+🟩 Call Server-side C# Code directly from Vue bindings  
+🟩 Server-Side Computed (Getter/Setter) Property (with some caveats for Getter)  
+🟩 ````@(Razor)```` Syntax and ````{{Vue Mustache}}```` syntax in one view
+
+![](https://vuezor.nant.co/images/vuezor-demo.gif)
 
 # Why you need this ?
 It might seem counter-intuitive to complement SPA-framework like Blazor with another SPA-framework like Vue.
@@ -24,5 +33,6 @@ Of course, you can mix Razor syntax and Vue mustaces in the same component. Razo
 
 </VueApp>
 ````
+# Start Using VueZor
 Ready? Read the [Getting Started Guide](https://github.com/nantcom/vuezor/wiki/Getting-Started)
 
