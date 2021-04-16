@@ -3,7 +3,7 @@ Comebine power of Blazor with VueJs. Write your code in C# and Blazor, render on
 Live Demo: https://vuezor.nant.co/
 
 🟩 **No JavaScript**  
-🟩 Actuall, also does not need to know Vue 🤣  
+🟩 Actually, also does not need to know much about Vue 🤣  
 🟩 Call Server-side C# Code directly from Vue bindings  
 🟩 Server-Side Computed (Getter/Setter) Property (with some caveats for Getter)  
 🟩 ````@(Razor)```` Syntax and ````{{Vue Mustache}}```` syntax in one view
